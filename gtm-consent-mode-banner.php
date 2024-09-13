@@ -20,4 +20,4 @@ use TagConcierge\ConsentModeBannerFree\ConsentModeBanner;
 
 require __DIR__ . '/vendor/autoload.php';
 
-( new ConsentModeBanner() )->initialize();
+( new ConsentModeBanner( __FILE__ ) )->initialize();

@@ -12,7 +12,15 @@ class ConsentModeBanner {
 
 	private $container;
 
+	private $pluginFile;
+
+	public function __construct( $plugin_file ) {
+		$this->pluginFile = $plugin_file;
+	}
+
 	public function initialize() {
 		$this->container = new Container();
+
+		$this->container->getOutputUtil()->setPluginFile( $this->pluginFile );
 	}
 }

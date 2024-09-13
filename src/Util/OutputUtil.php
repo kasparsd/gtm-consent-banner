@@ -6,6 +6,7 @@ class OutputUtil {
 
 	private $inlineScripts = ['header' => [], 'footer' => []];
 	private $externalScripts = ['header' => [], 'footer' => []];
+	private $pluginFile;
 
 	public function __construct() {
 		add_action( 'wp_head', [$this, 'wpHead'], 0 );
@@ -14,6 +15,10 @@ class OutputUtil {
 
 	public function loadExternalScript( $script, $footer = true): OutputUtil {
 		$this->externalScripts[true === $footer ? 'footer' : 'header'][] = $script;
+	public function setPluginFile($pluginFile) {
+		$this->pluginFile = $pluginFile;
+	}
+
 		return $this;
 	}
 

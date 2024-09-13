@@ -5,12 +5,9 @@ namespace TagConcierge\ConsentModeBannerFree\DependencyInjection;
 use TagConcierge\ConsentModeBannerFree\Service\GtmConsentModeService;
 use TagConcierge\ConsentModeBannerFree\Service\GtmSnippetService;
 use TagConcierge\ConsentModeBannerFree\Service\SettingsService;
-use TagConcierge\ConsentModeBannerFree\Util\OutputUtil;
 use TagConcierge\ConsentModeBannerFree\Util\SettingsUtil;
 
 class Container {
-
-	private $outputUtil;
 
 	private $gtmSnippetService;
 
@@ -21,9 +18,8 @@ class Container {
 	private $settingsUtil;
 
 	public function __construct() {
-		$this->outputUtil = new OutputUtil();
 		$this->settingsUtil = new SettingsUtil();
-		$this->gtmConsentModeService = new GtmConsentModeService($this->settingsUtil, $this->outputUtil);
+		$this->gtmConsentModeService = new GtmConsentModeService($this->settingsUtil);
 		$this->gtmSnippetService = new GtmSnippetService($this->settingsUtil);
 		$this->settingsService = new SettingsService($this->settingsUtil);
 	}

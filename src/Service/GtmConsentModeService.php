@@ -2,36 +2,17 @@
 
 namespace TagConcierge\ConsentModeBannerFree\Service;
 
-use TagConcierge\ConsentModeBannerFree\Util\OutputUtil;
 use TagConcierge\ConsentModeBannerFree\Util\SettingsUtil;
 
 class GtmConsentModeService {
 
-	const DATALAYER_SCRIPT_HANDLE = 'gtm-consent-mode-data-layer';
-
-	const BANNER_SCRIPT_HANDLE = 'gtm-consent-mode-banner';
-
 	private $settingsUtil;
 
-	private $outputUtil;
-
-	public function __construct( SettingsUtil $settingsUtil, OutputUtil $outputUtil) {
+	public function __construct( SettingsUtil $settingsUtil) {
 		$this->settingsUtil = $settingsUtil;
-		$this->outputUtil = $outputUtil;
-
-		add_action('init', [$this, 'init']);
 	}
 
-	public function init(): void {
-		$this->initialScripts();
-		$this->bannerScripts();
-	}
-
-	private function initialScripts(): void {
-		if ('1' === $this->settingsUtil->getOption('disabled')) {
-			return;
-		}
-
+	public function initialScripts(): string {
 		$consentTypes = json_encode(
 			array_reduce(
 				$this->settingsUtil->getOption('consent_types', []), 
@@ -46,7 +27,7 @@ class GtmConsentModeService {
 			)
 		);
 
-		$script = "
+		return "
 			window.dataLayer = window.dataLayer || [];
 			function gtag(){dataLayer.push(arguments);}
 			gtag('consent', 'default', $consentTypes);
@@ -57,15 +38,9 @@ class GtmConsentModeService {
 				}
 			} catch (error) {}
  		";
-
-		$this->outputUtil->addInlineScript(self::DATALAYER_SCRIPT_HANDLE, $script, false);
 	}
 
-	private function bannerScripts(): void {
-		if ('1' === $this->settingsUtil->getOption('disabled')) {
-			return;
-		}
-
+	public function bannerScripts(): string {
 		$settings = array_reduce([
 			'banner_display_mode',
 			'banner_display_wall',
@@ -119,7 +94,7 @@ class GtmConsentModeService {
 			],
 		]);
 
-		$script = "
+		return "
 			var config = $config;
 			cookiesBannerJs(
 				function() {
@@ -137,20 +112,5 @@ class GtmConsentModeService {
 				config
 			);
 		";
-
-		$this->outputUtil->addScript(
-			self::BANNER_SCRIPT_HANDLE, 
-			$this->outputUtil->getAssetUrl('consent-banner/script.js')
-		);
-		
-		$this->outputUtil->addInlineScript(
-			self::BANNER_SCRIPT_HANDLE, 
-			$script
-		);
-
-		$this->outputUtil->addStyle(
-			self::BANNER_SCRIPT_HANDLE,
-			$this->outputUtil->getAssetUrl('consent-banner/style-light.css')
-		);
 	}
 }

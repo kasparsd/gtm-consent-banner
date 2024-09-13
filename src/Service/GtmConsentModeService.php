@@ -7,6 +7,10 @@ use TagConcierge\ConsentModeBannerFree\Util\SettingsUtil;
 
 class GtmConsentModeService {
 
+	const DATALAYER_SCRIPT_HANDLE = 'gtm-consent-mode-data-layer';
+
+	const BANNER_SCRIPT_HANDLE = 'gtm-consent-mode-banner';
+
 	private $settingsUtil;
 
 	private $outputUtil;
@@ -15,34 +19,46 @@ class GtmConsentModeService {
 		$this->settingsUtil = $settingsUtil;
 		$this->outputUtil = $outputUtil;
 
+		add_action('init', [$this, 'init']);
+	}
+
+	public function init(): void {
 		$this->initialScripts();
 		$this->bannerScripts();
 	}
+
 	private function initialScripts(): void {
 		if ('1' === $this->settingsUtil->getOption('disabled')) {
 			return;
 		}
 
-		$consentTypes = json_encode(array_reduce($this->settingsUtil->getOption('consent_types', []), function( $agg, $type) {
-			if ('' === $type['name']) {
-				return $agg;
-			}
-			$agg[$type['name']] = $type['default'];
-			return $agg;
-		}, []));
+		$consentTypes = json_encode(
+			array_reduce(
+				$this->settingsUtil->getOption('consent_types', []), 
+				function( $agg, $type) {
+					if ('' === $type['name']) {
+						return $agg;
+					}
+					$agg[$type['name']] = $type['default'];
+					return $agg;
+				}, 
+				[]
+			)
+		);
 
-		$script = "window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('consent', 'default', $consentTypes);
+		$script = "
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('consent', 'default', $consentTypes);
+			try {
+				var consentPreferences = JSON.parse(localStorage.getItem('consent_preferences'));
+				if (consentPreferences !== null) {
+					gtag('consent', 'update', consentPreferences);
+				}
+			} catch (error) {}
+ 		";
 
-try {
-  var consentPreferences = JSON.parse(localStorage.getItem('consent_preferences'));
-  if (consentPreferences !== null) {
-     gtag('consent', 'update', consentPreferences);
-  }
-} catch (error) {}";
-
-		$this->outputUtil->addInlineScript($script, false);
+		$this->outputUtil->addInlineScript(self::DATALAYER_SCRIPT_HANDLE, $script, false);
 	}
 
 	private function bannerScripts(): void {
@@ -102,23 +118,39 @@ try {
 				]
 			],
 		]);
-		$script = "var config = $config;
-  cookiesBannerJs(
-    function() {
-      try {
-        var consentPreferences = JSON.parse(localStorage.getItem('consent_preferences'));
-        return consentPreferences;
-      } catch (error) {
-        return null;
-      }
-    },
-    function(consentPreferences) {
-      gtag('consent', 'update', consentPreferences);
-      localStorage.setItem('consent_preferences', JSON.stringify(consentPreferences));
-    },
-    config
-  );";
-		$this->outputUtil->loadExternalScript('https://public-assets.tagconcierge.com/consent-banner/1.2.3/cb.min.js');
-		$this->outputUtil->addInlineScript($script);
+
+		$script = "
+			var config = $config;
+			cookiesBannerJs(
+				function() {
+					try {
+						var consentPreferences = JSON.parse(localStorage.getItem('consent_preferences'));
+						return consentPreferences;
+					} catch (error) {
+						return null;
+					}
+				},
+				function(consentPreferences) {
+					gtag('consent', 'update', consentPreferences);
+					localStorage.setItem('consent_preferences', JSON.stringify(consentPreferences));
+				},
+				config
+			);
+		";
+
+		$this->outputUtil->addScript(
+			self::BANNER_SCRIPT_HANDLE, 
+			$this->outputUtil->getAssetUrl('consent-banner/script.js')
+		);
+		
+		$this->outputUtil->addInlineScript(
+			self::BANNER_SCRIPT_HANDLE, 
+			$script
+		);
+
+		$this->outputUtil->addStyle(
+			self::BANNER_SCRIPT_HANDLE,
+			$this->outputUtil->getAssetUrl('consent-banner/style-light.css')
+		);
 	}
 }

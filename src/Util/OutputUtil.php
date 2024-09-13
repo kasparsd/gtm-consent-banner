@@ -19,6 +19,10 @@ class OutputUtil {
 		$this->pluginFile = $pluginFile;
 	}
 
+	public function getAssetUrl($relativePath) {
+		return plugins_url($relativePath, dirname($this->pluginFile));
+	}
+
 		return $this;
 	}
 

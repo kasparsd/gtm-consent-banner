@@ -67,6 +67,7 @@ class GtmConsentModeService {
 		$consentTypes = array_filter($savedConsentTypes, function ( $type) {
 			return $type['name'];
 		});
+		
 		$config = json_encode([
 			'display' => [
 				'mode' => $settings['banner_display_mode'],
@@ -95,21 +96,26 @@ class GtmConsentModeService {
 		]);
 
 		return "
-			var config = $config;
-			cookiesBannerJs(
+			window.addEventListener(
+				'DOMContentLoaded', 
 				function() {
-					try {
-						var consentPreferences = JSON.parse(localStorage.getItem('consent_preferences'));
-						return consentPreferences;
-					} catch (error) {
-						return null;
-					}
-				},
-				function(consentPreferences) {
-					consentModeBannerGtag('consent', 'update', consentPreferences);
-					localStorage.setItem('consent_preferences', JSON.stringify(consentPreferences));
-				},
-				config
+					var config = $config;
+					cookiesBannerJs(
+						function() {
+							try {
+								var consentPreferences = JSON.parse(localStorage.getItem('consent_preferences'));
+								return consentPreferences;
+							} catch (error) {
+								return null;
+							}
+						},
+						function(consentPreferences) {
+							consentModeBannerGtag('consent', 'update', consentPreferences);
+							localStorage.setItem('consent_preferences', JSON.stringify(consentPreferences));
+						},
+						config
+					);	
+				}
 			);
 		";
 	}

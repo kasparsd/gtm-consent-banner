@@ -29,12 +29,12 @@ class GtmConsentModeService {
 
 		return "
 			window.dataLayer = window.dataLayer || [];
-			function gtag(){dataLayer.push(arguments);}
-			gtag('consent', 'default', $consentTypes);
+			function consentModeBannerGtag(){dataLayer.push(arguments);}
+			consentModeBannerGtag('consent', 'default', $consentTypes);
 			try {
 				var consentPreferences = JSON.parse(localStorage.getItem('consent_preferences'));
 				if (consentPreferences !== null) {
-					gtag('consent', 'update', consentPreferences);
+					consentModeBannerGtag('consent', 'update', consentPreferences);
 				}
 			} catch (error) {}
  		";
@@ -106,7 +106,7 @@ class GtmConsentModeService {
 					}
 				},
 				function(consentPreferences) {
-					gtag('consent', 'update', consentPreferences);
+					consentModeBannerGtag('consent', 'update', consentPreferences);
 					localStorage.setItem('consent_preferences', JSON.stringify(consentPreferences));
 				},
 				config
